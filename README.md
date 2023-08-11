@@ -127,3 +127,60 @@ npm run publish && npm run start
 ### License
 
 Apache License 2.0
+
+```javascript
+  db.createUser({user:"jw", pwd:"123", roles:[{role:"root", db:"admin"}]});
+  //开启安全
+  security:
+    authorization: enabled
+  //登录
+  db.auth('jw', '123');
+  //进入数据库
+  use blog
+  db.createUser({user:"blog", pwd:"123", roles:[{role:"dbOwner", db:"blog"}]});
+  //退出
+  quit();
+```
+
+```javascript
+  const mongoose = rquire("mongoose");
+  mongoose.connect("mongodb://blog:123@localhost:27017/blog", function(err){
+    if(err){
+      return console.log("数据库连接失败！");
+    }
+  });
+
+  //可以来继续操作数据库了（稍后我们要查询我希望我存放的数据，是整洁的）schema骨架定义一种存储的方式
+  const  UserSchema = mongoose.Schema({
+    time:{
+      type:Date,
+      default: new Date
+    },
+    username:{
+      type:String,
+      lowercase:true,
+      required:true
+    },
+    password:{
+      type:String,
+      required:true,
+    },
+    gender:{
+      type:Number,
+      enum:[0,1],
+      default:0
+    }
+  },{
+
+    timestamps:{
+      createAt:'created',
+      updatedAt:'updated'
+    }
+  });
+  // User 就是集合
+  mongoose.model("User", UserSchema); //默认集合的名字是model的名字小写
+  User.create({
+    username:'zs',
+    password:'123'
+  });
+```
