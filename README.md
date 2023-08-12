@@ -169,6 +169,10 @@ Apache License 2.0
       type:Number,
       enum:[0,1],
       default:0
+    },
+    hobby:{
+      type:Array,
+      default:[]
     }
   },{
 
@@ -177,10 +181,135 @@ Apache License 2.0
       updatedAt:'updated'
     }
   });
-  // User 就是集合
-  mongoose.model("User", UserSchema); //默认集合的名字是model的名字小写
-  User.create({
-    username:'zs',
-    password:'123'
+  (async ()=>{
+    let user = await User.create({username:'zf', password:'123', age: 12});
+  })();
+  //批量新增
+  (async ()=>{
+    let arr = [];
+    for(let i = 20: i<30,i++){
+      arr.push({
+        username:'zf',
+        password:'123',
+        age:i
+      });
+    }
+    let user = await User.create(arr); //调用一次插入
+  })();
+  //删除
+  (async () => {
+    let user = await User.deleteOne({username:"zf"});
+  })();
+  //查询
+  (async ()=> {
+    let user = await User.findById({_id:''})
+  })();
+  //修改
+  (async ()=> {
+    //$set $push $pop $inc
+    let user = await User.updateOne({_id:""}, {$set:{ hobby:"abc"}});
+    mongoose.disconnect();
+  })();
+
+   //查询
+  (async ()=> {
+    // let user = await User.find({age:{$gt:3, $lt:7}})
+    let user = await User.find({$or:[{age:18}, {age: 20}]})
+  })();
+
+    //分页查询
+  (async ()=> {
+    const currentPage = 3;
+    const limit = 3;
+    let user = await User.find({}).limit(limit).skip((currentPage - 1)*limit).sort({age:-1});
+    mongoose.disconnect();
+  })();
+
+```
+```javascript
+  const Articles = mongogse.schema({
+    title:String,
+    content:String,
+    user_id: mongoose.SchemaTypes.ObjectId,
+    // user_id: {ref:'User', type: mongoose.SchemaTypes.ObjectId},
+    price:Number,
+  },{
+      timestamps:{
+        createAt:'created',
+        updateAt:'updated'
+      }
   });
+  module.exports = mongoose.model('Article', Articles, 'article');
+```
+
+```javascript
+  (async ()=>{
+    //创建关联
+  let user = await User.create({username:'jw', password:'jw', gender:1});
+  let article = await Article.create({
+    title:'',
+    content:'',
+    user_id: user.id
+  });
+  //根据文章id查找用户
+  let article = Article.findById();
+  //关联查询
+  // let article = Article.findById('',{title:1}).populate('user_id',{hobby:0, gender:0});
+  User.findOne({
+    _id:article.user_id
+  });
+  //这个是原生的mongoose的方法
+  let articles = await Article.aggregate([//pipeline管道一个个来过滤
+    {
+      $project:{
+          createdAt:0,
+          updatedAt:0
+      }
+    },
+    {
+      $lookup:{
+          from:'user',
+          localField:'user_id',
+          foreignField:'_id',
+          as:'user'
+      }
+    },
+    {
+      $match:{
+        _id:mongoose.Types.ObjectId("")
+      }
+    }
+  ])
+
+  //这个是原生的mongoose的方法
+  let users = await User.aggregate([//pipeline管道一个个来过滤
+    {
+      $project:{
+          createdAt:0,
+          updatedAt:0
+      }
+    },
+    {
+      $lookup:{
+          from:'user',
+          localField:'user_id',
+          foreignField:'_id',
+          as:'user'
+      }
+    },
+    {
+      $group:{//查出来的结果叫name
+        _id:'$username',
+        age:{
+          $avg:'$age'
+        }
+    },
+    }
+    {
+      $match:{
+        _id:mongoose.Types.ObjectId("")
+      }
+    }
+  ])
+  })();
 ```
